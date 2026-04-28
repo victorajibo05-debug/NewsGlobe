@@ -1,0 +1,12 @@
+{
+    "scripts": {
+        "dev": "nodemon --exec ts-node Src/App.ts"
+    },
+    "ts-node": {
+        "esm": true,
+        "experimentalSpecifierResolution": "node"
+    },
+    "dependencies": {
+        "dotenv": "^17.4.2"
+    }
+}
