@@ -7,6 +7,9 @@ export interface bar {
   countryName: string | null;
   loading: boolean;
   error: string | null;
+  markers: GlobeMarker[];
+  onCountrySearch: (countryCode: string) => void;       
+    
 }
 
 export interface items {
@@ -19,7 +22,7 @@ export interface items {
 
 export interface card {
   title: string;
-  content: string | null;
+  description: string | null;
   onClose: () => void;
 }
 export interface GlobeMarker {

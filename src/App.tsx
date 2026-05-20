@@ -1,10 +1,13 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import GlobeComponent from './components/globe';
+import GlobeComponent from "./components/globe";
 import {Sidebar} from "./components/sidebar";
 import {NewsCard} from "./components/newsCard";
-import { useFetchNews} from './hooks/useFetchnews';
-import type { NewsArticle } from './hooks/useFetchnews';
-import type { GlobeMarker, bar } from "types/types";
+import { BottomSheet } from "./components/bottomsheet";
+import { useFetchNews } from "./hooks/useFetchnews";
+import type { NewsArticle } from "./hooks/useFetchnews";
+import type { GlobeMarker } from "./components/types/types";
+import { GlobeOverlay } from "./components/GlobeOverlay";
+
 
 const MARKERS: GlobeMarker[] = [
   { lat: 37.09,  lng: -95.71,  country: "United States",  countryCode: "us", label: "🇺🇸 USA",          size: 2, color: "#3B82F6" },
@@ -237,22 +240,38 @@ const MARKERS: GlobeMarker[] = [
 { lat: 4.86,   lng: -58.93,  country: "Guyana",     countryCode: "gy", label: "🇬🇾 Guyana",     size: 0.5, color: "#862E9C" },
 { lat: 3.92,   lng: -56.03,  country: "Suriname",   countryCode: "sr", label: "🇸🇷 Suriname",   size: 0.5, color: "#1971C2" },
   
+ 
+
 ];
+
+// Detect if user is on mobile
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
+  return isMobile;
+}
 
 export default function App() {
   const { articles, loading, error, fetchNewsByCountry } = useFetchNews();
+  const isMobile = useIsMobile();
 
   const [activeCountryCode, setActiveCountryCode] = useState<string | null>(null);
+  const [activeCountryName, setActiveCountryName] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
 
   const mainRef = useRef<HTMLDivElement>(null);
   const [globeSize, setGlobeSize] = useState({ width: 0, height: 0 });
 
-  // Measure the main container and keep globe size in sync
   useEffect(() => {
     if (!mainRef.current) return;
-
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         setGlobeSize({
@@ -261,20 +280,22 @@ export default function App() {
         });
       }
     });
-
     observer.observe(mainRef.current);
-
-    // Cleanup when component unmounts
     return () => observer.disconnect();
   }, []);
 
   const handleMarkerClick = useCallback((marker: GlobeMarker) => {
-	console.log("Marker clicked:", marker);
     setActiveCountryCode(marker.countryCode);
+    setActiveCountryName(marker.country);
     setSelectedArticle(null);
-    setIsSidebarOpen(true);
     fetchNewsByCountry(marker.countryCode);
-  }, [fetchNewsByCountry]);
+
+    if (isMobile) {
+      setIsBottomSheetOpen(true);  // ← open bottom sheet on mobile
+    } else {
+      setIsSidebarOpen(true);      // ← open sidebar on desktop
+    }
+  }, [fetchNewsByCountry, isMobile]);
 
   const handleArticleClick = useCallback((article: NewsArticle) => {
     setSelectedArticle(article);
@@ -284,60 +305,108 @@ export default function App() {
     setSelectedArticle(null);
   }, []);
 
-  const sidebarProp: bar = {
-    variant: 'static',
+  const sidebarProp = {
+    variant: 'static' as const,
     isOpen: isSidebarOpen,
     onToggle: () => setIsSidebarOpen(prev => !prev),
-    side: 'left',
+    side: 'left' as const,
+    loading,
+    error,
+    markers: MARKERS,
+    countryName: activeCountryName,
+    onCountrySearch: (countryCode: string) => {
+      setActiveCountryCode(countryCode);
+      setSelectedArticle(null);
+      fetchNewsByCountry(countryCode);
+    },
     items: articles.map(article => ({
       article_id: article.article_id,
       title: article.title,
       countryCode: activeCountryCode ?? '',
       onClick: () => handleArticleClick(article),
     })),
-    countryName: MARKERS.find(m => m.countryCode === (activeCountryCode ?? ''))?.country ?? null,
-    loading,
-    error,
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#000"}}>
+    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', background: '#000' }}>
 
-      <Sidebar sidebar={sidebarProp} />
+      {/* Sidebar — desktop only */}
+      {!isMobile && (
+        <div style={{ flexShrink: 0 }}>
+          <Sidebar sidebar={sidebarProp} />
+        </div>
+      )}
 
-      <main 
-       ref={mainRef}
-      style={{  flex: 1, position: "relative", justifyContent: 'center', overflow: "hidden", minWidth: 0  }}>
-         {globeSize.width > 0 && (
-        <GlobeComponent
-          markers={MARKERS}
-          onMarkerClick={handleMarkerClick}
-          activeCountryCode={activeCountryCode ?? undefined}
-          height={globeSize.height}
-          width={globeSize.width}
-        />
-         )}
-
-        {selectedArticle && (
-          <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-           bottom: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "rgba(0,0,0,0.5)",
-            zIndex: 100,
-          }}>
-            <NewsCard card={{ 
-				title: selectedArticle.title, 
-				content: selectedArticle.content, 
-				onClose: handleCardClose }} />
-          </div>
+      {/* Globe — full screen on mobile, fills rest on desktop */}
+      <main
+        ref={mainRef}
+        style={{ flex: 1, position: 'relative', overflow: 'hidden', minWidth: 0,alignItems: isMobile ? 'center' : 'center',
+    justifyContent: isMobile ? 'center' : 'center', }}
+      >
+        {globeSize.width > 0 && (
+          <GlobeComponent
+            markers={MARKERS}
+            onMarkerClick={handleMarkerClick}
+            activeCountryCode={activeCountryCode ?? undefined}
+            height={isMobile ? window.innerHeight : globeSize.height}
+            width={isMobile ? window.innerWidth : globeSize.width}
+            showLabels={isMobile}  // ← pass this to show country names on mobile
+          />
         )}
+
+ {isMobile && (
+    <GlobeOverlay
+      markers={MARKERS}
+      onCountrySearch={(countryCode) => {
+        setActiveCountryCode(countryCode);
+        setSelectedArticle(null);
+        fetchNewsByCountry(countryCode);
+        
+      }}
+    />
+  )}
+        {/* News card overlay */}
+       {/* News card — desktop only, mobile handles it inside BottomSheet */}
+{selectedArticle && !isMobile && (
+  <div style={{
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'rgba(0,0,0,0.5)',
+    zIndex: 100,
+  }}>
+    <NewsCard
+      card={{
+        title: selectedArticle.title,
+        description: selectedArticle.description,
+        onClose: handleCardClose,
+      }}
+    />
+  </div>
+)}
       </main>
+
+      {/* Bottom sheet — mobile only */}
+      {isMobile && (
+        <BottomSheet
+          isOpen={isBottomSheetOpen}
+          onClose={() => setIsBottomSheetOpen(false)}
+          countryName={activeCountryName}
+          loading={loading}
+          error={error}
+          items={articles.map(article => ({
+            article_id: article.article_id,
+            title: article.title,
+            description: article.description,
+            onClick: () => handleArticleClick(article),
+          }))}
+        />
+      )}
 
     </div>
   );
