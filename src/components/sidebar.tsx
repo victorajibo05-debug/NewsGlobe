@@ -185,7 +185,7 @@ export function Sidebar({ sidebar }: props) {
      
       <div style={headerStyle}>NewsGlobe
         <img
-        src= "src/assets/Globe.jpg"
+        src= "https://res.cloudinary.com/dcspok8u7/image/upload/v1779284549/Globe_io460n.jpg"
         alt= 'Globe Icon'
         style={{ width: '50px', height: '50px' }}>
         </img>
