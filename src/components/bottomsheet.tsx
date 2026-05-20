@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import '@fontsource/bebas-neue';
+
 import { Pointer } from "./pointer";
 import { NewsCard } from "./newsCard";
 
