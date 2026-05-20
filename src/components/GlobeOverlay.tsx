@@ -115,7 +115,7 @@ export function GlobeOverlay({ markers, onCountrySearch }: GlobeOverlayProps) {
       <div style={headerStyle}>
          NEWSGLOBE
          <img
-        src= "src/assets/Globe.jpg"
+        src= "https://res.cloudinary.com/dcspok8u7/image/upload/v1779284549/Globe_io460n.jpg"
         alt= 'Globe Icon'
         style={{ width: '40px', height: '40px' }}>
         </img>
