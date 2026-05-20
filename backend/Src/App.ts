@@ -8,7 +8,7 @@ const app = express();
 
 app.use(cors({
   origin: [
-    "https://news-globe-five.vercel.app",  // ← your Vercel URL from earlier screenshot
+    "https://newsglobe.vercel.app", 
     "http://localhost:5173"
   ],
   methods: ["GET", "POST"],
@@ -19,7 +19,7 @@ app.use(express.json());
 app.use("/api/news", newsRoutes);
 
 app.use((req, res, next) => {
-  console.log("Incoming request:", req.method, req.url); // ← add this
+  console.log("Incoming request:", req.method, req.url); 
   next();
 });
 
