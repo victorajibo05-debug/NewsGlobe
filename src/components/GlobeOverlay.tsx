@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import '@fontsource/bebas-neue';
 import type { GlobeMarker } from "./types/types"
 
 

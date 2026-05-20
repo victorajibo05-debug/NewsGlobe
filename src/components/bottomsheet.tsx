@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from "react";
-
 import { Pointer } from "./pointer";
 import { NewsCard } from "./newsCard";
 

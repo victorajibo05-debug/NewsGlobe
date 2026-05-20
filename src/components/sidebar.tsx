@@ -1,5 +1,4 @@
 import type { bar } from "./types/types";
-import '@fontsource/bebas-neue';
 import { Pointer } from "./pointer";
 import React, { useState, useRef, useCallback } from "react";
 

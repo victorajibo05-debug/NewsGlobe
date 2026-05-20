@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import '@fontsource/bebas-neue';
+
 
 interface card {
   title: string;
