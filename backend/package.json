@@ -9,6 +9,12 @@
         "experimentalSpecifierResolution": "node"
     },
     "dependencies": {
-        "dotenv": "^17.4.2"
+        "axios": "^1.16.1",
+        "cors": "^2.8.6",
+        "dotenv": "^17.4.2",
+        "express": "^5.2.1"
+    },
+    "devDependencies": {
+        "@types/node": "^25.9.1"
     }
 }
