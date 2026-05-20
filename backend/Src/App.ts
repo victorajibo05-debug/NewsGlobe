@@ -6,7 +6,14 @@ import cors from "cors";
  
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://news-globe-five.vercel.app",  // ← your Vercel URL from earlier screenshot
+    "http://localhost:5173"
+  ],
+  methods: ["GET", "POST"],
+  credentials: true,
+}));
 app.use(express.json());
 
 app.use("/api/news", newsRoutes);
