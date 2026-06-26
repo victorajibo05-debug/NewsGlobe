@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Pointer } from "./pointer";
 import { NewsCard } from "./newsCard";
 
@@ -31,6 +31,28 @@ export function BottomSheet({
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<{ title: string; description: string | null } | null>(null);
+
+  // Guards against the "ghost click" mobile browsers fire ~300ms after a
+  // touchstart/touchend on the same coordinates. Without this, tapping a
+  // search result that opens the sheet can immediately re-trigger a click
+  // on the now-visible overlay sitting at that same screen position,
+  // closing the sheet right after it opens.
+  const justOpenedRef = useRef(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      justOpenedRef.current = true;
+      const timer = setTimeout(() => {
+        justOpenedRef.current = false;
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  const handleOverlayClick = useCallback(() => {
+    if (justOpenedRef.current) return;
+    onClose();
+  }, [onClose]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     setStartY(e.touches[0].clientY);
@@ -142,7 +164,7 @@ export function BottomSheet({
   return (
     <>
       {/* Overlay */}
-      <div style={overlayStyle} onClick={onClose} />
+      <div style={overlayStyle} onClick={handleOverlayClick} />
 
       {/* Sheet */}
       <div

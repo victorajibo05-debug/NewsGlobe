@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useEffect, useRef } from 'react';
-import type { GlobeMarker } from 'types/types';
+import type { GlobeMarker } from '../types/types';
 
 interface Props {
   markers?: GlobeMarker[];
@@ -24,6 +24,45 @@ export default function GlobeComponent({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const globeRef = useRef<any>(null);
 
+  // Builds a dot + permanent label for each marker
+  const createMarkerElement = (d: any) => {
+    const el = document.createElement('div');
+    el.style.display = 'flex';
+    el.style.flexDirection = 'column';
+    el.style.alignItems = 'center';
+    el.style.cursor = 'pointer';
+    el.style.pointerEvents = 'auto';
+
+    const isActive = d.countryCode === activeCountryCode;
+
+    el.innerHTML = `
+      <div style="
+        width: ${isActive ? '14px' : '10px'};
+        height: ${isActive ? '14px' : '10px'};
+        background: ${isActive ? '#ffffff' : (d.color || 'orange')};
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,0.5);
+        box-shadow: 0 0 6px ${d.color || 'orange'};
+      "></div>
+      <div style="
+        margin-top: 4px;
+        background: rgba(0,0,0,0.7);
+        color: #ffffff;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: ${showLabels ? '10px' : '11px'};
+        font-family: Bebas Neue, sans-serif;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        pointer-events: none;
+      ">${d.country}</div>
+    `;
+
+    el.onclick = () => onMarkerClick && onMarkerClick(d);
+
+    return el;
+  };
+
   useEffect(() => {
     const existingScript = document.getElementById('globe-gl-script');
 
@@ -46,32 +85,24 @@ export default function GlobeComponent({
             )
             .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
             .pointOfView({ lat: 20, lng: 0, altitude: 2 }, 0)
-            .pointsData(markers)
-            .pointLat((d: any) => d.lat)
-            .pointLng((d: any) => d.lng)
-            .pointAltitude((d: any) => (d.magnitude ?? 1) * 0.01)
-            .pointColor((d: any) => d.color || 'orange')
-            .pointRadius((d: any) => d.countryCode === activeCountryCode ? 0.7 : 0.4)
-            .pointLabel((d: any) => {
-              const size = showLabels ? '11px' : '14px';
-              const padding = showLabels ? '4px 8px' : '6px 12px';
-              return `
-                <div style="
-                  background: rgba(0,0,0,0.75);
-                  color: #ffffff;
-                  padding: ${padding};
-                  border-radius: 6px;
-                  font-size: ${size};
-                  font-family: Bebas Neue, sans-serif;
-                  letter-spacing: 1px;
-                  border: 1px solid #0047AB;
-                  pointer-events: none;
-                ">${d.country}</div>
-              `;
-            })
-            .onPointClick((d: any) => onMarkerClick && onMarkerClick(d));
+            .htmlElementsData(markers)
+            .htmlLat((d: any) => d.lat)
+            .htmlLng((d: any) => d.lng)
+            .htmlAltitude(0.01)
+            .htmlElement(createMarkerElement);
 
           globeRef.current = chain;
+
+          // Explicitly enable zoom on the orbit controls — globe.gl doesn't
+          // always turn this on by default once a parent has overflow:hidden.
+          const controls = chain.controls();
+          if (controls) {
+            controls.enableZoom = true;
+            controls.minDistance = 150;   // closest you can zoom in
+            controls.maxDistance = 800;   // farthest you can zoom out
+            controls.zoomSpeed = 0.8;
+            controls.enableDamping = true;
+          }
 
         } catch (err) {
           console.error('Failed to init globe', err);
@@ -111,38 +142,19 @@ export default function GlobeComponent({
     };
   }, []);
 
-  // Reactively update markers and active country
+  // Keeps labels and highlighting in sync when markers/activeCountryCode change
   useEffect(() => {
     if (globeRef.current) {
       (globeRef.current as any)
-        .pointsData(markers)
-        .pointColor((d: any) => d.color || 'orange')
-        .pointRadius((d: any) => d.countryCode === activeCountryCode ? 0.7 : 0.4)
-        .pointLabel((d: any) => {
-          const size = showLabels ? '11px' : '14px';
-          const padding = showLabels ? '4px 8px' : '6px 12px';
-          return `
-            <div style="
-              background: rgba(0,0,0,0.75);
-              color: #ffffff;
-              padding: ${padding};
-              border-radius: 6px;
-              font-size: ${size};
-              font-family: Bebas Neue, sans-serif;
-              letter-spacing: 1px;
-              border: 1px solid #0047AB;
-              pointer-events: none;
-            ">${d.country}</div>
-          `;
-        })
-        .onPointClick((d: any) => onMarkerClick && onMarkerClick(d));
+        .htmlElementsData(markers)
+        .htmlElement(createMarkerElement);
     }
   }, [markers, activeCountryCode, showLabels]);
 
   return (
     <div
       ref={containerRef}
-      style={{ width, height, display: 'block',  margin: '0 auto', }}
+      style={{ width, height, display: 'block', touchAction: 'none' }}
       aria-hidden={false}
     />
   );

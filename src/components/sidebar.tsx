@@ -1,4 +1,4 @@
-import type { bar } from "./types/types";
+import type { bar } from "../../types/types";
 import { Pointer } from "./pointer";
 import React, { useState, useRef, useCallback } from "react";
 
@@ -22,7 +22,7 @@ export function Sidebar({ sidebar }: props) {
   };
 
   const handleCountrySelect = (countryCode: string, countryName: string) => {
-    sidebar.onCountrySearch(countryCode);
+    sidebar.onCountrySearch(countryCode, countryName);
     setSearchQuery(countryName);
     setShowDropdown(false);
   };
@@ -236,7 +236,14 @@ export function Sidebar({ sidebar }: props) {
                 style={dropdownItemStyle(hoveredDropdownIndex === i)}
                 onMouseEnter={() => setHoveredDropdownIndex(i)}
                 onMouseLeave={() => setHoveredDropdownIndex(null)}
-                onMouseDown={() => handleCountrySelect(marker.countryCode, marker.country)}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleCountrySelect(marker.countryCode, marker.country);
+                }}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  handleCountrySelect(marker.countryCode, marker.country);
+                }}
               >
                 {marker.label} {marker.country}
               </div>

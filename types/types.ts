@@ -8,7 +8,7 @@ export interface bar {
   loading: boolean;
   error: string | null;
   markers: GlobeMarker[];
-  onCountrySearch: (countryCode: string) => void;       
+  onCountrySearch: (countryCode: string, countryName: string) => void;       
     
 }
 

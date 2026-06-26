@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import type { GlobeMarker } from "./types/types"
+import type { GlobeMarker } from "../../types/types"
 
 
 interface GlobeOverlayProps {
   markers: GlobeMarker[];
-  onCountrySearch: (countryCode: string) => void;
+  onCountrySearch: (countryCode: string, countryName?: string) => void;
 }
 
 export function GlobeOverlay({ markers, onCountrySearch }: GlobeOverlayProps) {
@@ -22,7 +22,7 @@ export function GlobeOverlay({ markers, onCountrySearch }: GlobeOverlayProps) {
   };
 
   const handleCountrySelect = (countryCode: string, countryName: string) => {
-    onCountrySearch(countryCode);
+    onCountrySearch(countryCode, countryName);
     setSearchQuery(countryName);
     setShowDropdown(false);
   };
@@ -155,7 +155,13 @@ export function GlobeOverlay({ markers, onCountrySearch }: GlobeOverlayProps) {
                 style={dropdownItemStyle(hoveredIndex === i)}
                 onMouseEnter={() => setHoveredIndex(i)}
                 onMouseLeave={() => setHoveredIndex(null)}
-                onMouseDown={() => handleCountrySelect(marker.countryCode, marker.country)}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleCountrySelect(marker.countryCode, marker.country);
+                }}
+                onTouchStart={() => {
+                  handleCountrySelect(marker.countryCode, marker.country);
+                }}
               >
                 {marker.label} {marker.country}
               </div>

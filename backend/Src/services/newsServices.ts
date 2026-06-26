@@ -1,10 +1,7 @@
 import axios from "axios";
 import { config } from "../Config/env";
-import dotenv from "dotenv";
-dotenv.config();
 
 const BASE_URL = "https://newsdata.io/api/1/latest";
-
 
 export interface NewsArticle {
   article_id: string;
@@ -28,11 +25,12 @@ export interface NewsResponse {
 }
 
 export async function fetchNewsByCountry(countryCode: string): Promise<NewsResponse> {
-   console.log("API KEY:", process.env.API_KEY); 
-   console.log("Country:", countryCode);
-  const { data } = await axios.get( BASE_URL, {
+  console.log("API KEY:", config.API_KEY);
+  console.log("Country:", countryCode);
+
+  const { data } = await axios.get(BASE_URL, {
     params: {
-      apikey: process.env.API_KEY,
+      apikey: config.API_KEY,
       country: countryCode.toLowerCase(),
       language: "en",
       size: 10,
